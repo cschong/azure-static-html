@@ -1,17 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>My Azure Page</title>
+  <meta charset="utf-8" />
+  <title>My Agent Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-    }
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    #webchat { height: 70vh; max-width: 420px; border: 1px solid #ddd; border-radius: 12px; overflow: hidden; }
   </style>
 </head>
+
 <body>
-  <h1>Hello from Azure Static Web Apps</h1>
-  <p>This page is hosted on Microsoft Azure.</p>
+  <h1>Chat with our agent</h1>
+  <div id="webchat"></div>
+
+  <!-- BotFramework Web Chat -->
+  <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
+
+  <script>
+    async function startChat() {
+      // Call YOUR backend token endpoint (do not expose secrets in HTML)
+      const resp = await fetch("/api/directline/token");
+      const { token } = await resp.json();
+
+      window.WebChat.renderWebChat(
+        {
+          directLine: window.WebChat.createDirectLine({ token }),
+          userID: "webuser_" + Math.random().toString(16).slice(2)
+        },
+        document.getElementById("webchat")
+      );
+    }
+
+    startChat();
+  </script>
 </body>
 </html>
