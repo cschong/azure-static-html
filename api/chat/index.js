@@ -56,5 +56,7 @@ module.exports = async function (context, req) {
       status: 500,
       body: { error: String(err) }
     };
+
+    context.log("Running in SWA function");
   }
 };
