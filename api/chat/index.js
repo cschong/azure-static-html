@@ -1,12 +1,3 @@
-const { DefaultAzureCredential } = require("@azure/identity");
-
-async function getToken() {
-  const credential = new DefaultAzureCredential();
-  const scope = "https://cognitiveservices.azure.com/.default";
-  const token = await credential.getToken(scope);
-  return token.token;
-}
-
 module.exports = async function (context, req) {
   try {
     const message = req.body?.message;
@@ -17,8 +8,11 @@ module.exports = async function (context, req) {
 
     const url = process.env.FOUNDRY_RESPONSES_URL;
     const model = process.env.FOUNDRY_MODEL || "gpt-4.1-mini";
+    const apiKey = process.env.FOUNDRY_API_KEY;
 
-    const token = await getToken();
+    if (!apiKey) {
+      throw new Error("FOUNDRY_API_KEY is not set in application settings");
+    }
 
     const payload = {
       model,
@@ -29,12 +23,23 @@ module.exports = async function (context, req) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+
+        // ⬇️ THIS is the key change
+        "api-key": apiKey
+        // If this fails, we’ll switch to Authorization: Bearer <key>
       },
       body: JSON.stringify(payload)
     });
 
     const data = await r.json();
+
+    if (!r.ok) {
+      context.res = {
+        status: r.status,
+        body: { error: "Upstream error", details: data }
+      };
+      return;
+    }
 
     const answer =
       data.output_text ||
